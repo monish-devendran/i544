@@ -77,12 +77,7 @@ function items(tag, meta, path, $element) {
 /************************** Event Handlers *****************************/
 
 //@TODO
-function makeOptions(meta,idx){
 
-  const $options = makeElement('option',{"value": meta.items[idx].key}).text(meta.items[idx].text)
-  return $options
-
-}
 
 function onBlur(ele,meta)
 {
@@ -93,18 +88,24 @@ function onBlur(ele,meta)
     if(typeof meta.chkFn === "function"){
       (meta.chkFn(val))?$(ele).next().text(""):(typeof meta.errMsgFn === "function")?$(ele).next().text(meta.errMsgFn(Event,meta)):$(ele).next().text("invalid value "+val)
     }else{
-      console.log("asjkadhgjhj")
       $(ele).next().text("")
     }
   }
 }
 
+function onChange(ele,meta) {
+  ($(ele).val())?$(ele).next().text(""):$(ele).next().text("The field "+meta.text+" must be specified.")
+}
+
+
 
 
 /********************** Type Routine Common Handling *******************/
 
-//@TODO
-function on() {
+function makeOptions(meta,idx){
+
+  const $options = makeElement('option',{"value": meta.items[idx].key}).text(meta.items[idx].text)
+  return $options
 
 }
 
@@ -143,13 +144,10 @@ function form(meta, path, $element) {
         temp_data.push(data[meta.items[i].attr.name])
       }
     }
-   console.log("sd")
     if(temp_data.includes("")){
-      console.log("append")
       $('input,select,textarea', $form).trigger('blur');
       $('input,select', $form).trigger('change');
     }else{
-      console.log("show")
       console.log(JSON.stringify(data, null, 2));
     }
   });
@@ -328,11 +326,6 @@ function uniSelect(meta, path, $element) {
     $div.append($divfield)
   }
   $element.append($div) //showing
-}
-
-
-function onChange(ele,meta) {
-  ($(ele).val())?$(ele).next().text(""):$(ele).next().text("The field "+meta.text+" must be specified.")
 }
 
 
