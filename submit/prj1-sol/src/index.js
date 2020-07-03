@@ -84,29 +84,16 @@ function makeOptions(meta,idx){
 
 }
 
-function dataManuplators(data){
-  console.log(data)
-  var keys = [];
-  let desmond_data = new Map()
-  let val = [];
-  let temp = {};
-  for (let i = 0; i < data.length; i++) {
-    if(desmond_data.has(data[i].name)){
-        let val = [temp[data[i].name]]
-        val.push(data[i].value)
-        console.log(val)
-    }else{
-      desmond_data.set(data[i].name,data[i].value)
-      temp[data[i].name] = data[i].value
-    }
-  }
-  console.log(desmond_data)
-}
+function dataManuplators(data) {
 
+
+}
 /********************** Type Routine Common Handling *******************/
 
 //@TODO
+function on() {
 
+}
 
 /***************************** Type Routines ***************************/
 
@@ -129,8 +116,12 @@ function form(meta, path, $element) {
     const $form = $(this);
     //@TODO
     const results = $form.serializeArray();
-    console.log(JSON.stringify(results, null, 2));
-    dataManuplators(results)
+    let data = {};
+    for (let i=0; i<results.length; i++) {
+      var temp = $('[name=' + results[i].name + ']', $form);
+      ($(temp).attr("multiple") || $(temp).attr("type") === "checkbox") ? ((data[results[i].name]) ? data[results[i].name].push(results[i].value) : data[results[i].name] = [results[i].value]) : data[results[i].name] = results[i].value
+    }
+    console.log(JSON.stringify(data, null, 2));
   });
 }
 
@@ -165,12 +156,35 @@ function input(meta, path, $element) {
 
   const $div =  makeElement('div',{})
   const $input = items('input', meta, path, $element);
-  $div.append($input)
-  const $errorDiv = makeElement('div',{"class":"error","id":$path+"-err"})
-  $div.append($errorDiv)
+  $div.append($input);
+  if(meta.required){
+    const $errorDiv = makeElement('div',{"class":"error","id":$path+"-err"})
+    $div.append($errorDiv);
+    $input.blur(function () {
+      onBlur(this,meta);
+    });
+  }
+
   $element.append($div)
+}
 
-
+function onBlur(ele,meta)
+{
+  var text_val = $(ele).val()
+  if($(ele).val().trim())
+  {
+    var val = text_val.trim();
+    if(meta.chkFn(val) === null){
+      $(ele).next().text(meta.errMsgFn(Event,meta))
+    }else{
+      $(ele).next().text("");
+    }
+  }
+  else
+  {
+    $(ele).next().text("The field "+meta.text+" must be specified.");
+    //console.log(meta.errMsgFn(Event,meta))
+  }
 }
 
 function link(meta, path, $element) {
@@ -217,8 +231,6 @@ function multiSelect(meta, path, $element) {
   const $divError = makeElement('div',{"class":"error","id":$path+"-err"})
   $div.append($divError)
   $element.append($div)
-
- 
 }
 
 function para(meta, path, $element) { items('p', meta, path, $element); }
@@ -243,8 +255,8 @@ function submit(meta, path, $element) {
 
   
   const $button = makeElement('button',typeSubmit).text(meta.text || 'submit');
-  
   $element.append($button)
+
 }
 
 function uniSelect(meta, path, $element) {
@@ -259,7 +271,7 @@ function uniSelect(meta, path, $element) {
   $element.append($e) //showing this to web
 
   const $div = makeElement('div',{})
-
+  const $divErr = makeElement('div',{"class":"error","id":$path+"-err"})
 
   if(meta.items.length > (N_UNI_SELECT || 4)){
 
@@ -271,7 +283,10 @@ function uniSelect(meta, path, $element) {
       $select.append($getOptions)
       
     }
-     $div.append($select)
+
+    $div.append($select)
+      $div.append($divErr)
+
   }else{
     const $divfield = makeElement('div',{"class":"fieldset"})
 
