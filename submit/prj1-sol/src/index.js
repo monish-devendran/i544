@@ -30,7 +30,7 @@ function makeElement(tag, attr={}) {
   const $e = $(`<${tag}/>`);
 
   Object.entries(attr).forEach(([k, v]) => $e.attr(k, v));
-  
+
   return $e;
 }
 
@@ -68,9 +68,9 @@ function items(tag, meta, path, $element) {
   const $e = makeElement(tag, meta.attr);
 
   (meta.items || []).
-    forEach((item, i) =>render(path.concat('items', i), $e));
+  forEach((item, i) =>render(path.concat('items', i), $e));
   $element.append($e);
-  
+
   return $e;
 }
 
@@ -84,10 +84,23 @@ function makeOptions(meta,idx){
 
 }
 
-function dataManuplators(data) {
-
-
+function onBlur(ele,meta)
+{
+  var val = ($(ele).val()).trim()
+  if(val === ''){
+    (meta.required === true)?$(ele).next().text("The field "+meta.text+" must be specified."):$(ele).next().text("")
+  }else{
+    if(typeof meta.chkFn === "function"){
+      (meta.chkFn(val))?$(ele).next().text(""):(typeof meta.errMsgFn === "function")?$(ele).next().text(meta.errMsgFn(Event,meta)):$(ele).next().text("invalid value "+val)
+    }else{
+      console.log("asjkadhgjhj")
+      $(ele).next().text("")
+    }
+  }
 }
+
+
+
 /********************** Type Routine Common Handling *******************/
 
 //@TODO
@@ -109,21 +122,41 @@ function form(meta, path, $element) {
 
 
   const $form = items('form', meta, path, $element);
-  
-  
+
+
   $form.submit(function(event) {
+
     event.preventDefault();
     const $form = $(this);
     //@TODO
     const results = $form.serializeArray();
+
     let data = {};
     for (let i=0; i<results.length; i++) {
+
       var temp = $('[name=' + results[i].name + ']', $form);
       ($(temp).attr("multiple") || $(temp).attr("type") === "checkbox") ? ((data[results[i].name]) ? data[results[i].name].push(results[i].value) : data[results[i].name] = [results[i].value]) : data[results[i].name] = results[i].value
     }
-    console.log(JSON.stringify(data, null, 2));
+    let temp_data = []
+    for (let i=0; i<meta.items.length-1; i++) {
+      if(meta.items[i].required === true){
+        temp_data.push(data[meta.items[i].attr.name])
+      }
+    }
+   console.log("sd")
+    if(temp_data.includes("")){
+      console.log("append")
+      $('input,select,textarea', $form).trigger('blur');
+      $('input,select', $form).trigger('change');
+    }else{
+      console.log("show")
+      console.log(JSON.stringify(data, null, 2));
+    }
   });
+
 }
+
+
 
 function header(meta, path, $element) {
   const $e = makeElement(`h${meta.level || 1}`, meta.attr);
@@ -145,47 +178,32 @@ function input(meta, path, $element) {
   }
   let type_assign;
   if(meta.subType === undefined){
-
     type_assign = {"id":$path,"type":"text"};
   }else{
     type_assign = {"id":$path,"type":meta.subType};
   }
-  
+
   Object.assign(meta.attr,type_assign);
-   
+
 
   const $div =  makeElement('div',{})
   const $input = items('input', meta, path, $element);
   $div.append($input);
-  if(meta.required){
-    const $errorDiv = makeElement('div',{"class":"error","id":$path+"-err"})
-    $div.append($errorDiv);
-    $input.blur(function () {
-      onBlur(this,meta);
-    });
-  }
+
+  const $errorDiv = makeElement('div',{"class":"error","id":$path+"-err"})
+  $div.append($errorDiv);
+
+  $input.blur(function () {
+    onBlur(this,meta);
+  });
+
 
   $element.append($div)
+
+
 }
 
-function onBlur(ele,meta)
-{
-  var text_val = $(ele).val()
-  if($(ele).val().trim())
-  {
-    var val = text_val.trim();
-    if(meta.chkFn(val) === null){
-      $(ele).next().text(meta.errMsgFn(Event,meta))
-    }else{
-      $(ele).next().text("");
-    }
-  }
-  else
-  {
-    $(ele).next().text("The field "+meta.text+" must be specified.");
-    //console.log(meta.errMsgFn(Event,meta))
-  }
-}
+
 
 function link(meta, path, $element) {
   const parentType = getType(access(path.concat('..')));
@@ -204,6 +222,7 @@ function multiSelect(meta, path, $element) {
   const $e = makeElement('label',forAttr).text(text);
   $element.append($e)
   const $div = makeElement('div',{})
+  const $divError = makeElement('div',{"class":"error","id":$path+"-err"})
   if(meta.items.length > (N_MULTI_SELECT || 6) ){
 
     meta.attr.multiple = "multiple"
@@ -224,14 +243,21 @@ function multiSelect(meta, path, $element) {
       const $checkbox_input = makeElement('input',meta.attr)
       $divfield.append($label)
       $divfield.append($checkbox_input)
+      console.log($checkbox_input)
+      $checkbox_input.change(function () {
+        ($('input').is(':checked'))? $divError.text("") : $divError.text("The field "+meta.text+" must be specified.")
+      })
+
     }
+
     $div.append($divfield)
-  
+    $div.append($divError)
   }
-  const $divError = makeElement('div',{"class":"error","id":$path+"-err"})
-  $div.append($divError)
+
   $element.append($div)
 }
+
+
 
 function para(meta, path, $element) { items('p', meta, path, $element); }
 
@@ -253,10 +279,8 @@ function submit(meta, path, $element) {
 
   const typeSubmit = Object.assign({},meta.attr,{"type":"submit"})
 
-  
   const $button = makeElement('button',typeSubmit).text(meta.text || 'submit');
   $element.append($button)
-
 }
 
 function uniSelect(meta, path, $element) {
@@ -281,35 +305,38 @@ function uniSelect(meta, path, $element) {
       let $getOptions = makeOptions(meta,i)
 
       $select.append($getOptions)
-      
+
     }
 
     $div.append($select)
-      $div.append($divErr)
+    $div.append($divErr)
+    $select.change(function () {
+      onChange(this,meta);
+    });
 
   }else{
     const $divfield = makeElement('div',{"class":"fieldset"})
 
     for(let i=0; i<meta.items.length; i++){
-
-
       Object.assign(meta.attr, {"id":$path+"-"+i,"type":"radio","value":meta.items[i].key})
 
       const $label = makeElement('label',{"for":$path}).text(meta.items[i].key)
       const $radio_input = makeElement('input',meta.attr)
       $divfield.append($label)
       $divfield.append($radio_input)
-
     }
     $div.append($divfield)
   }
   $element.append($div) //showing
- 
-
 }
 
 
-//map from type to type handling function.  
+function onChange(ele,meta) {
+  ($(ele).val())?$(ele).next().text(""):$(ele).next().text("The field "+meta.text+" must be specified.")
+}
+
+
+//map from type to type handling function.
 const FNS = {
   block,
   form,
