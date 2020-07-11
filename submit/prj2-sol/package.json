@@ -1,0 +1,15 @@
+{
+  "name": "prj2",
+  "version": "1.0.0",
+  "description": "Name:\t\tMonish \r B-Number:\tB000817603\r Email:\t\tmdevend1@binghamton.edu",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mongodb": "^3.5.9"
+  }
+}
