@@ -2,4 +2,4 @@
 CS544 Projects
 
 
-used 1 slack day
+used 1 slack day for project 1
