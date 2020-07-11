@@ -154,7 +154,7 @@ export default class Model {
     cart_items.$currentDate = {_lastModified:true}
     const book_data =  await this.db.collection(BOOKS_COLLECTION).find({"isbn":nameValues.sku}).toArray()
     if(book_data.length === 0){
-      throw [new ModelError("BAD_ID ","unkown sku "+nameValues.sku),"sku"]
+      throw [new ModelError("BAD_ID ","unkown sku "+nameValues.sku, "sku")]
     }
     if(nameValues.nUnits === 0){
       cart_items.$unset = { [nameValues["sku"]]:1}
