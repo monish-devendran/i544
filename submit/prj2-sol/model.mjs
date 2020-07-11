@@ -233,9 +233,14 @@ export default class Model {
 
     const nameValues = this._validate('findBooks', rawNameValues);
     //@TODO
-    const find_data = { $search : nameValues.authorsTitleSearch}
     const searchData = {}
-    searchData.$text = find_data
+    if(rawNameValues.hasOwnProperty("isbn")){
+      searchData["isbn"] = rawNameValues.isbn
+    }else{
+      const find_data = { $search : nameValues.authorsTitleSearch}
+      searchData.$text = find_data
+    }
+
     await this.db.collection(BOOKS_COLLECTION).createIndex({title:"text",authors:"text"})
     const data =  await this.db.collection(BOOKS_COLLECTION).find(searchData)
         .limit(nameValues._count||COUNT)
